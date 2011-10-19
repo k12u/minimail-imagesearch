@@ -25,17 +25,25 @@ sub new {
     }, $klass;
 }
 
+sub extract_feature {
+    my ($self, $feature_strategy, $sample_level ) = @_;
+    if ( $feature_strategy eq "" ) {
+        return $self->get_color_distribution_stat($sample_level);
+    }
+}
+
 # 画像の特徴検出：とてもシンプルな実装方法
 sub get_color_distribution_stat {
-    my ($self, $level, $output_file) = @_;
-    $self->_confirm_init_sample($level, $output_file);
+    my ($self, $sample_level, $output_file) = @_;
+    $self->_confirm_init_sample($sample_level, $output_file);
     $self->color_stat($self->sample->getcolorusagehash);
 }
 
 # 画像の特徴検出：細かい制御を入れる場合の実装
+# 飽きたので途中まで・・・
 sub get_pixels_info {
-    my ($self, $level, $output_file) = @_;
-    $self->_confirm_init_sample($level, $output_file);
+    my ($self, $sample_level, $output_file) = @_;
+    $self->_confirm_init_sample($sample_level, $output_file);
     $self->_confirm_init_pixel_info();
 
     my $pixels_info = $self->pixels_info(+[]);
@@ -60,9 +68,9 @@ sub _confirm_init_pixel_info {
 }
 
 sub _confirm_init_sample {
-    my ($self, $level, $output_file) = @_;
+    my ($self, $sample_level, $output_file) = @_;
     my $sample = $self->sample($self->image->copy);
-    $sample->filter(type=>"postlevels", levels=>$level) or die $self->sample->errstr;
+    $sample->filter(type=>"postlevels", levels=>$sample_level) or die $self->sample->errstr;
     $sample->write("$output_file") if(defined $output_file);
     return 1;
 }
