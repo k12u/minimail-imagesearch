@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Imager;
+use base qw/Class::Accessor::Fast/;
+__PACKAGE__->mk_accessors(qw/image sample width height colorusage/);
 
 sub new {
     my ( $klass, $imager_or_filename ) = @_;
@@ -14,21 +16,31 @@ sub new {
     else {
         $img = Imager->new(file => $imager_or_filename) or die Imager->errstr;
     }
-    return bless +{ image => $img }, $klass;
+    return bless +{
+        image      => $img,
+        sample     => undef,
+        width      => undef,
+        height     => undef,
+        colorusage => +{},
+    }, $klass;
 }
 
 sub get_color_distribution_stat {
     my ($self, $level, $output_file) = @_;
 
-    my $copy = $self->{image}->copy;
-    $copy->filter(type=>"postlevels", levels=>$level) or die $copy->errstr;
-    $copy->write("$output_file") if(defined $output_file);
+    my $sample = $self->sample($self->image->copy);
 
-    return $copy->getcolorusagehash;
+    $sample->filter(type=>"postlevels", levels=>$level) or die $self->sample->errstr;
+    $sample->write("$output_file") if(defined $output_file);
+
+    $self->colorusage($sample->getcolorusagehash);
 }
 
 sub get_pixels_info {
+    my ($self) = @_;
     
 }
+
+
 
 1;
