@@ -4,22 +4,15 @@ use strict;
 use Imager;
 use Data::Dump qw/dump/;
 
+use Minimal::ImageSearch;
+
 die "Usage: $0 filename\n" if !-f $ARGV[0];
 my ($file, $loop_max) = @ARGV;
 $loop_max ||= 5;
 
-my $img = Imager->new(file=>$file) or die Imager->errstr;
+my $img = Minimal::ImageSearch->new($file) or die Imager->errstr;
 
 for (1..$loop_max) {
-  process($_);
-}
-
-sub process {
-  my $level = shift;
-  my $copy = $img->copy;
-  $copy->filter(type=>"postlevels", levels=>$level) or die $img->errstr;
-  $copy->write("/tmp/output$level.bmp");
-  print "level: $level\n";
-  print dump($copy->getcolorusagehash);
-  print "\n";
+    #print dump($img->get_color_distribution_stat($_, "/private/tmp/output$_.bmp"));
+    print dump($img->get_color_distribution_stat($_, "./output$_.bmp"));
 }
