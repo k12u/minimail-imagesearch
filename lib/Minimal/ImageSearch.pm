@@ -1,12 +1,14 @@
 package Minimal::ImageSearch;
 
+use strict;
+
 use Data::Dump qw/dump/;
 use base qw/Class::Accessor::Fast/;
 __PACKAGE__->mk_accessors(qw/repository dictionary feature_strategy correlation_method sample_level/);
 
 sub DEFAULT_FEATURE_STRATEGY   { 'plain'  }
 sub DEFAULT_CORRELATION_METHOD { 'cosine' }
-sub DEFAULT_SAMPLE_LEVEL       { 5 }
+sub DEFAULT_SAMPLE_LEVEL       { 5; }
 
 sub new {
     my ($klass, %opts) = @_;
@@ -29,14 +31,23 @@ sub _format_html {
     my ($self, $data) = @_;
 
     for (@$data) {
-        print dump($_);
+        printf qq{<img src="%s" width="%d" height="%s">%d\n},
+            $_->file,$_->width/4, $_->height/4, $_->correlation;
     }
 }
 
 sub _search {
     my ( $self, $query_image ) = @_;
     my $query = $self->_init_query($query_image);
-    return sort { $self->get_correlation($query, $_) } @{ $self->repository };
+
+    my %correlation = ();
+
+    return [ sort {
+        ($correlation{$a} ||= $self->get_correlation($query, $a))
+            <=>
+                ($correlation{$a} ||= $self->get_correlation($query, $a))
+            } @{ $self->repository }
+           ];
 }
 
 sub _init_query {
@@ -47,8 +58,8 @@ sub _init_query {
 }
 
 sub add_image {
-    my ( $self, $image, $feature_strategy ) = @_;
-    _confirm_init_repository();
+    my ( $self, $image ) = @_;
+    $self->_confirm_init_repository();
     my $img_object = Minimal::ImageSearch::Image->new($image);
     $img_object->extract_feature( $self->feature_strategy, $self->sample_level  );
     push @{ $self->repository } , $img_object;
@@ -62,9 +73,9 @@ sub _confirm_init_repository {
 }
 
 sub get_correlation {
-    my ( $self, $query_image, $target_image, $correlation_method ) = @_;
+    my ( $self, $query_image, $target_image ) = @_;
 
-    if ($correlation_method eq "cosine") {
+    if ($self->correlation_method eq "cosine") {
         return $self->get_cosine( $query_image, $target_image);
     }
     # 宿題
@@ -79,6 +90,9 @@ sub get_cosine {
     for my $k (keys %$query_image) {
         $cosine += $query_image->{$k} * $target_image->{$k};
     }
+    $target_image->confirm_init_pixel_info();
+    $cosine /= ($target_image->width * $target_image->height);
+    $target_image->correlation($cosine);
     return $cosine;
 }
 
