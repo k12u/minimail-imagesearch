@@ -31,7 +31,7 @@ sub _format_html {
     my ($self, $data) = @_;
 
     for (@$data) {
-        printf qq{<img src="%s" width="%d" height="%s">%d\n},
+        printf qq{<img src="%s" width="%d" height="%s">%d<br>\n},
             $_->file,$_->width/4, $_->height/4, $_->correlation;
     }
 }
