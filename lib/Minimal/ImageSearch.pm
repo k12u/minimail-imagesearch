@@ -31,8 +31,9 @@ sub _format_html {
     my ($self, $data) = @_;
 
     for (@$data) {
-        printf qq{<img src="%s" width="%d" height="%s">%d<br>\n},
-            $_->file,$_->width/4, $_->height/4, $_->correlation;
+        $_->confirm_init_pixel_info();
+        printf qq{<img src="%s" width="%d" height="%s">%s : %d<br>\n},
+            $_->file,$_->width/4, $_->height/4, $_->file, $_->correlation;
     }
 }
 
@@ -42,8 +43,8 @@ sub _search {
 
     my %correlation = ();
 
-    return [ sort {
-        ($correlation{$a} ||= $self->get_correlation($query, $a))
+    return [ $query, sort {
+        ($correlation{$b} ||= $self->get_correlation($query, $b))
             <=>
                 ($correlation{$a} ||= $self->get_correlation($query, $a))
             } @{ $self->repository }
@@ -76,7 +77,10 @@ sub get_correlation {
     my ( $self, $query_image, $target_image ) = @_;
 
     if ($self->correlation_method eq "cosine") {
-        return $self->get_cosine( $query_image, $target_image);
+        return $self->cosine( $query_image, $target_image);
+    }
+    if ($self->correlation_method eq "euclid") {
+        return $self->euclid( $query_image, $target_image);
     }
     # 宿題
     # elsif () {
@@ -84,16 +88,22 @@ sub get_correlation {
     # }
 }
 
-sub get_cosine {
+sub cosine {
     my ($self, $query_image, $target_image ) = @_;
     my $cosine = 0;
-    for my $k (keys %$query_image) {
-        $cosine += $query_image->{$k} * $target_image->{$k};
+    for my $k (keys %{ $query_image->color_stat } ) {
+        $cosine += $query_image->{color_stat}{$k} * $target_image->{color_stat}{$k};
     }
     $target_image->confirm_init_pixel_info();
     $cosine /= ($target_image->width * $target_image->height);
     $target_image->correlation($cosine);
     return $cosine;
+}
+
+# 宿題
+sub euclid {
+    my ($self, $query_image, $target_image ) = @_;
+    return 1;
 }
 
 1;

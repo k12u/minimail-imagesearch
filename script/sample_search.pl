@@ -10,6 +10,8 @@ use File::Zglob;
 
 my ($query_image, $given_sample_level) = @ARGV;
 
+die "Usage: $0 query_image_path sample_level" unless $given_sample_level;
+
 my $minimal_search = Minimal::ImageSearch->new(
     feature_strategy => 'plain',
     correlation_method => 'cosine',
